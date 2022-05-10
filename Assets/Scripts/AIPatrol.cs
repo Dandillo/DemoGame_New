@@ -4,50 +4,56 @@ using UnityEngine;
 
 public class AIPatrol : MonoBehaviour
 {
-    [HideInInspector] 
-    public bool mustPatrol;
-    private bool mustTurn = false;
+    [Header("Patrol points")]
+    [SerializeField] private Transform leftEdge;
+    [SerializeField] private Transform rightEdge;
+    
+    [Header("Enemy")]
+    [SerializeField] private Transform enemy;
+    [Header("Movement")]
+    [SerializeField] private float speed = 150;
 
-    private Rigidbody2D rb;
-    public int walkspeed = 16;
-    public Transform groundCheckPosition;
-    public LayerMask GroundLayer;
+    private bool movingLeft;
+
+    private Vector3 initScale;
+
     private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
+        initScale = enemy.localScale;
     }
-    void Start()
+    private void MoveInDirection(int _direction)
     {
-        mustPatrol = true;
+        enemy.localScale = new Vector2(Mathf.Abs(initScale.x) * _direction, initScale.y);
+        enemy.position = new Vector2(enemy.position.x + Time.deltaTime * _direction * speed, enemy.position.y);
     }
 
-    void FixedUpdate()
-    {
-        if (mustPatrol)
-        {
-            mustTurn = Physics2D.OverlapCircle(groundCheckPosition.position, 0.1f, GroundLayer);
-        }
-    }
     void Update()
     {
-        if (mustPatrol)
-            Patrol();
-    }
-
-    private void Patrol()
-    {
-        if (mustTurn)
+        if (enemy != null)
         {
-            FLip();
+            if (movingLeft)
+            {
+                if(enemy.position.x >= leftEdge.position.x)
+                    MoveInDirection(-1);
+                else
+                {
+                    FLip();
+                }
+            }
+            else
+            {
+                if(enemy.position.x <= rightEdge.position.x)
+                    MoveInDirection(1);
+                else
+                {
+                    FLip();
+                }
+            }
         }
-        rb.velocity = new Vector2(walkspeed * Time.fixedDeltaTime,rb.velocity.y);
+        
     }
-
     void FLip()
     {
-        mustPatrol = false;
-        transform.localScale = new Vector2(transform.localScale.x * -1, transform.localScale.y * -1 );
-        walkspeed *= -1;
-        mustPatrol = true;
+        movingLeft = !movingLeft;
     }
 }
